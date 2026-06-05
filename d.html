@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Sade Dereceli Puanlama Anahtarı Oluşturucu</title>
+    <title>Eğitimci Değerlendirme Asistanı (Dinamik Sürüm)</title>
     <style>
         :root {
             --main-font: "Times New Roman", Times, serif;
@@ -85,6 +85,7 @@
             margin-bottom: 20px;
             border: 2px solid #E88316;
             font-size: var(--main-font-size);
+            table-layout: fixed; /* Sütunların esnemesini dengeler */
         }
         
         th, td {
@@ -116,6 +117,7 @@
             font-weight: bold;
             color: #c0392b;
             background-color: #fdf5e6;
+            width: 10%;
         }
         #toplam-puan { font-size: 20px; color: #c0392b; text-align: center; }
 
@@ -161,11 +163,17 @@
 
     <div class="toolbar-group">
         <label>Hazır Şablonlar:</label>
-        <select id="sablonSecici" style="width: 200px;">
+        <select id="sablonSecici" style="width: 220px;">
             <option value="">-- Şablon Seçin --</option>
             
             <optgroup label="⭐ Kaydedilen Şablonlarım" id="ozel-sablonlar-grubu">
                 <option disabled>(Henüz kaydedilmiş şablon yok)</option>
+            </optgroup>
+
+            <optgroup label="Kontrol Listeleri ve Ölçekler">
+                <option value="sayfaKontrolDeney">Deney Raporu Kontrol Listesi</option>
+                <option value="sayfaKontrolProje">Proje / Performans Kontrol Listesi</option>
+                <option value="sayfaDerecelemeSunum">Sunum Becerileri Dereceleme Ölçeği</option>
             </optgroup>
 
             <optgroup label="Lise Genel Değerlendirmeler">
@@ -173,16 +181,18 @@
                 <option value="sayfaLab">Laboratuvar / Deney Değerlendirme</option>
                 <option value="sayfaTartisma">Bilimsel Tartışma (Münazara)</option>
                 <option value="sayfaKatilim">Derse Katılım ve Gözlem</option>
-                <option value="sayfaPosterYeni">Poster Değerlendirme Formu (Yeni)</option>
+                <option value="sayfaPosterYeni">Poster Değerlendirme Formu</option>
                 <option value="sayfaRapor">Rapor Değerlendirme Formu</option>
             </optgroup>
-            <optgroup label="Yeni Değerlendirmeler">
+            
+            <optgroup label="Değerlendirme Formları (Açık Uçlu)">
                 <option value="sayfaAnalitik">Analitik Puanlama Anahtarı</option>
                 <option value="sayfaOz">Özdeğerlendirme Formu</option>
                 <option value="sayfaAkran">Akran Değerlendirme</option>
                 <option value="sayfaGrup">Grup Değerlendirmesi</option>
             </optgroup>
-            <optgroup label="Ders Kitabı Şablonları">
+
+            <optgroup label="Ders Kitabı Rubrikleri (MEB)">
                 <option value="sayfa65">Sayfa 65 - Bilgi Görseli</option>
                 <option value="sayfa80">Sayfa 80 - Kavram Haritası</option>
                 <option value="sayfa95">Sayfa 95 - Senaryo Tasarımı</option>
@@ -220,12 +230,12 @@
             <tr>
                 <th colspan="6" id="ana-baslik" contenteditable="true" style="font-size: 1.2em; padding: 15px;">Dereceli Puanlama Anahtarı</th>
             </tr>
-            <tr>
-                <th contenteditable="true" style="width: 12%;">Ölçütler</th>
-                <th id="th-4" contenteditable="true" style="width: 16%;">Çok İyi<br>(4)</th>
-                <th id="th-3" contenteditable="true" style="width: 16%;">İyi<br>(3)</th>
-                <th id="th-2" contenteditable="true" style="width: 16%;">Orta<br>(2)</th>
-                <th id="th-1" contenteditable="true" style="width: 16%;">Geliştirilebilir<br>(1)</th>
+            <tr id="kriterler-satiri">
+                <th contenteditable="true" style="width: 20%;">Ölçütler</th>
+                <th contenteditable="true">Çok İyi<br>(4)</th>
+                <th contenteditable="true">İyi<br>(3)</th>
+                <th contenteditable="true">Orta<br>(2)</th>
+                <th contenteditable="true">Geliştirilebilir<br>(1)</th>
                 <th contenteditable="true" style="width: 10%;">Başarı Puanı</th>
             </tr>
         </thead>
@@ -240,7 +250,7 @@
             </tr>
         </tbody>
         <tfoot>
-            <tr>
+            <tr id="foot-satiri">
                 <td contenteditable="true" style="text-align: right;" colspan="5">TOPLAM PUAN:</td>
                 <td id="toplam-puan">0</td>
             </tr>
@@ -253,7 +263,44 @@
 </div>
 
 <script>
+    let guncelKriterSayisi = 4; // Dinamik sütunlar için başlangıç değeri
+
     const sablonVerileri = {
+        // --- KONTROL LİSTELERİ VE DERECELEME ÖLÇEKLERİ (YENİ) ---
+        sayfaKontrolDeney: {
+            baslik: "Deney Raporu Kontrol Listesi",
+            kriterler: ["Evet<br>(1 Puan)", "Hayır<br>(0 Puan)"], // 2 Sütun
+            satirlar: [
+                ["Deneyin amacı ve bilimsel temeli açıkça belirtilmiş mi?", "", ""],
+                ["Kullanılan araç, gereç ve malzemeler eksiksiz listelenmiş mi?", "", ""],
+                ["Deneyin yapılış aşamaları sırasıyla ve anlaşılır bir şekilde yazılmış mı?", "", ""],
+                ["Elde edilen veriler tablo, grafik veya uygun birimlerle doğru kaydedilmiş mi?", "", ""],
+                ["Veriler analiz edilerek deneyin amacına uygun bilimsel bir sonuca varılmış mı?", "", ""]
+            ]
+        },
+        sayfaKontrolProje: {
+            baslik: "Proje / Performans Görevi Kontrol Listesi",
+            kriterler: ["Evet<br>(1 Puan)", "Hayır<br>(0 Puan)"], // 2 Sütun
+            satirlar: [
+                ["Verilen görevin amacı, kapsamı ve beklentileri doğru anlaşılmış mı?", "", ""],
+                ["Çalışma için bir plan oluşturulmuş ve bu takvime uyulmuş mu?", "", ""],
+                ["Güvenilir, bilimsel ve çeşitli bilgi kaynaklarından yararlanılmış mı?", "", ""],
+                ["Toplanan bilgiler kopyala-yapıştır yapılmadan, özgün bir dille bütünleştirilmiş mi?", "", ""],
+                ["Çalışma, istenilen formatta, özenli ve zamanında teslim edilmiş mi?", "", ""]
+            ]
+        },
+        sayfaDerecelemeSunum: {
+            baslik: "Sunum Becerileri Dereceleme Ölçeği",
+            kriterler: ["Her Zaman<br>(3 Puan)", "Bazen<br>(2 Puan)", "Hiç<br>(1 Puan)"], // 3 Sütun
+            satirlar: [
+                ["Konuşurken ses tonunu, vurguyu ve hızını etkili bir şekilde kullanır.", "", "", ""],
+                ["Sınıftaki dinleyicilerle sürekli göz teması kurar ve beden dilini iyi kullanır.", "", "", ""],
+                ["Sunum materyallerini (slayt, afiş, donanım) konuyu destekleyecek şekilde kullanır.", "", "", ""],
+                ["Konuyu anlatırken akıcı, anlaşılır ve dil bilgisi kurallarına uygun bir Türkçe kullanır.", "", "", ""],
+                ["Sorulan sorulara tatmin edici ve bilimsel doğruluğu olan cevaplar verir.", "", "", ""]
+            ]
+        },
+
         // --- LİSE GENEL DEĞERLENDİRME ŞABLONLARI ---
         sayfaPosterYeni: {
             baslik: "Dereceli Puanlama Anahtarı",
@@ -319,7 +366,6 @@
                 ["Grup İçi İletişim", "Grup veya eşli çalışmalarda arkadaşlarına karşı son derece saygılı, destekleyici ve uyumludur.", "Grup çalışmalarında arkadaşlarıyla uyum içinde çalışır.", "Grup çalışmalarında zaman zaman iletişim sorunları yaşar veya fikir ayrılığına düşer.", "Grup çalışmalarına katılmak istemez, arkadaşlarıyla uyumsuz davranışlar sergiler."]
             ]
         },
-        // --- DİĞER ŞABLONLAR ---
         sayfaAnalitik: {
             baslik: "Analitik Dereceli Puanlama Anahtarı",
             kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
@@ -387,14 +433,15 @@
     function satirEkle() {
         const govde = document.getElementById('rubrik-govdesi');
         const yeniSatir = document.createElement('tr');
-        yeniSatir.innerHTML = `
-            <td contenteditable="true">Yeni Ölçüt</td>
-            <td contenteditable="true"></td>
-            <td contenteditable="true"></td>
-            <td contenteditable="true"></td>
-            <td contenteditable="true"></td>
-            <td contenteditable="true" class="puan-hucresi"></td>
-        `;
+        
+        // Mevcut sütun sayısına göre (GuncelKriterSayisi) dinamik satır ekle
+        let htmlContent = '<td contenteditable="true">Yeni Ölçüt</td>';
+        for(let i=0; i<guncelKriterSayisi; i++) {
+            htmlContent += '<td contenteditable="true"></td>';
+        }
+        htmlContent += '<td contenteditable="true" class="puan-hucresi"></td>';
+        
+        yeniSatir.innerHTML = htmlContent;
         govde.appendChild(yeniSatir);
         veriKaydet();
     }
@@ -410,16 +457,18 @@
             satirlar.push(hucreler);
         });
 
+        // Dinamik başlıkları al
+        const kriterler = [];
+        const theadCells = document.querySelectorAll('#kriterler-satiri th');
+        for(let i=1; i < theadCells.length - 1; i++) {
+            kriterler.push(theadCells[i].innerHTML);
+        }
+
         const yeniSablon = {
             isim: isim,
             veri: {
                 baslik: document.getElementById('ana-baslik').innerText,
-                kriterler: [
-                    document.getElementById('th-4').innerHTML,
-                    document.getElementById('th-3').innerHTML,
-                    document.getElementById('th-2').innerHTML,
-                    document.getElementById('th-1').innerHTML
-                ],
+                kriterler: kriterler,
                 satirlar: satirlar
             }
         };
@@ -476,25 +525,48 @@
         }
     }
 
+    // GÜNCELLENMİŞ DİNAMİK TABLO OLUŞTURMA FONKSİYONU
     function tabloyuOlustur(baslik, kriterler, satirlar) {
+        const theadTr = document.getElementById('kriterler-satiri');
         const govde = document.getElementById('rubrik-govdesi');
+        const footTr = document.getElementById('foot-satiri');
         
-        document.getElementById('ana-baslik').innerText = baslik;
-        document.getElementById('th-4').innerHTML = kriterler[0];
-        document.getElementById('th-3').innerHTML = kriterler[1];
-        document.getElementById('th-2').innerHTML = kriterler[2];
-        document.getElementById('th-1').innerHTML = kriterler[3];
+        guncelKriterSayisi = kriterler.length;
 
+        // Başlık ve Genişlik Ayarları
+        document.getElementById('ana-baslik').innerText = baslik;
+        document.getElementById('ana-baslik').colSpan = guncelKriterSayisi + 2; 
+
+        // Sütun başlıklarını dinamik olarak oluştur
+        theadTr.innerHTML = '<th contenteditable="true" style="width: 20%;">Ölçütler</th>';
+        kriterler.forEach(k => {
+            theadTr.innerHTML += `<th contenteditable="true">${k}</th>`;
+        });
+        theadTr.innerHTML += '<th contenteditable="true" style="width: 10%;">Başarı Puanı</th>';
+
+        // Alt Toplam alanını dinamik birleştir
+        footTr.innerHTML = `<td contenteditable="true" style="text-align: right;" colspan="${guncelKriterSayisi + 1}">TOPLAM PUAN:</td><td id="toplam-puan">0</td>`;
+
+        // Satırları doldur
         govde.innerHTML = ""; 
-        
         satirlar.forEach(satirVerisi => {
             const tr = document.createElement('tr');
-            satirVerisi.forEach(hucreMetni => {
+            
+            // İlk hücre (Ölçüt Adı)
+            const tdOlcut = document.createElement('td');
+            tdOlcut.contentEditable = "true";
+            tdOlcut.innerHTML = satirVerisi[0];
+            tr.appendChild(tdOlcut);
+
+            // Dinamik kriter hücreleri
+            for(let i=0; i<guncelKriterSayisi; i++) {
                 const td = document.createElement('td');
                 td.contentEditable = "true";
-                td.innerHTML = hucreMetni;
+                td.innerHTML = satirVerisi[i+1] || "";
                 tr.appendChild(td);
-            });
+            }
+
+            // Puan hücresi
             const tdPuan = document.createElement('td');
             tdPuan.contentEditable = "true";
             tdPuan.className = "puan-hucresi";
@@ -523,7 +595,10 @@
             }
         });
         
-        document.getElementById('toplam-puan').innerText = toplam;
+        const toplamPuanHucresi = document.getElementById('toplam-puan');
+        if(toplamPuanHucresi) {
+            toplamPuanHucresi.innerText = toplam;
+        }
         veriKaydet();
     }
 
@@ -535,14 +610,15 @@
             satirlar.push(hucreler);
         });
 
+        const kriterler = [];
+        const theadCells = document.querySelectorAll('#kriterler-satiri th');
+        for(let i=1; i < theadCells.length - 1; i++) {
+            kriterler.push(theadCells[i].innerHTML);
+        }
+
         const ozelSablon = {
             baslik: document.getElementById('ana-baslik').innerText,
-            kriterler: [
-                document.getElementById('th-4').innerHTML,
-                document.getElementById('th-3').innerHTML,
-                document.getElementById('th-2').innerHTML,
-                document.getElementById('th-1').innerHTML
-            ],
+            kriterler: kriterler,
             satirlar: satirlar
         };
 
@@ -573,11 +649,13 @@
     function veriKaydet() {
         const htmlIcerik = document.getElementById('yazdirma-alani').innerHTML;
         localStorage.setItem('ogretmenAsistanHafizaSade', htmlIcerik);
+        localStorage.setItem('ogretmenAsistanKriterSayisi', guncelKriterSayisi);
     }
 
     function hafizayiTemizle() {
         if(confirm("Tüm veriler temizlenecek, emin misiniz?")) {
             localStorage.removeItem('ogretmenAsistanHafizaSade');
+            localStorage.removeItem('ogretmenAsistanKriterSayisi');
             location.reload();
         }
     }
@@ -585,7 +663,10 @@
     window.onload = function() {
         kayitliSablonlariMenuyeEkle();
         const kayitliVeri = localStorage.getItem('ogretmenAsistanHafizaSade');
-        if(kayitliVeri) {
+        const kayitliSayi = localStorage.getItem('ogretmenAsistanKriterSayisi');
+        
+        if(kayitliVeri && kayitliSayi) {
+            guncelKriterSayisi = parseInt(kayitliSayi);
             document.getElementById('yazdirma-alani').innerHTML = kayitliVeri;
             hesapla();
         }
