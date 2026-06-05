@@ -173,6 +173,8 @@
                 <option value="sayfaLab">Laboratuvar / Deney Değerlendirme</option>
                 <option value="sayfaTartisma">Bilimsel Tartışma (Münazara)</option>
                 <option value="sayfaKatilim">Derse Katılım ve Gözlem</option>
+                <option value="sayfaPosterYeni">Poster Değerlendirme Formu (Yeni)</option>
+                <option value="sayfaRapor">Rapor Değerlendirme Formu</option>
             </optgroup>
             <optgroup label="Yeni Değerlendirmeler">
                 <option value="sayfaAnalitik">Analitik Puanlama Anahtarı</option>
@@ -253,6 +255,26 @@
 <script>
     const sablonVerileri = {
         // --- LİSE GENEL DEĞERLENDİRME ŞABLONLARI ---
+        sayfaPosterYeni: {
+            baslik: "Dereceli Puanlama Anahtarı",
+            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+            satirlar: [
+                ["İçerik", "Posterde konunun bütün temel kavramlarına yer verilmiştir.", "Posterde konunun bazı temel kavramlarına yer verilmiştir.", "Posterde konunun temel kavramlarından birine yer verilmiştir.", "Posterde konunun temel kavramlarına yer verilmemiştir."],
+                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
+                ["Görsellik", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
+                ["Zamanın Etkili Kullanımı", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Poster hazırlama görevi için verilen süre çok aşılmıştır."]
+            ]
+        },
+        sayfaRapor: {
+            baslik: "Dereceli Puanlama Anahtarı",
+            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+            satirlar: [
+                ["İçerik", "Raporda konunun bütün temel kavramlarına yer verilmiştir.", "Raporda konunun bazı temel kavramlarına yer verilmiştir.", "Raporda konunun temel kavramlarından birine yer verilmiştir.", "Raporda konunun temel kavramlarına yer verilmemiştir."],
+                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
+                ["Görsellik", "Raporda renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Raporda renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Raporda renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Raporda renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
+                ["Zamanın Etkili Kullanımı", "Rapor hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Rapor hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Rapor hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Rapor hazırlama görevi için verilen süre çok aşılmıştır."]
+            ]
+        },
         sayfaProje: {
             baslik: "Proje Değerlendirme Anahtarı",
             kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
@@ -297,7 +319,7 @@
                 ["Grup İçi İletişim", "Grup veya eşli çalışmalarda arkadaşlarına karşı son derece saygılı, destekleyici ve uyumludur.", "Grup çalışmalarında arkadaşlarıyla uyum içinde çalışır.", "Grup çalışmalarında zaman zaman iletişim sorunları yaşar veya fikir ayrılığına düşer.", "Grup çalışmalarına katılmak istemez, arkadaşlarıyla uyumsuz davranışlar sergiler."]
             ]
         },
-        // --- ÖNCEKİ ŞABLONLAR ---
+        // --- DİĞER ŞABLONLAR ---
         sayfaAnalitik: {
             baslik: "Analitik Dereceli Puanlama Anahtarı",
             kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
@@ -377,7 +399,6 @@
         veriKaydet();
     }
 
-    // TARAYICIYA KAYDETME VE YÜKLEME (GÜNCELLENDİ)
     function sablonKaydetBrowser() {
         const isim = prompt("Kaydedilecek şablon için bir isim giriniz:");
         if (!isim) return;
