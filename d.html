@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Profesyonel Dereceli Puanlama Anahtarı Oluşturucu</title>
+    <title>Eğitimci Değerlendirme Asistanı (V3)</title>
     <style>
         :root {
             --main-font: "Times New Roman", Times, serif;
@@ -41,7 +41,7 @@
             border-radius: 5px;
         }
         .toolbar label { font-size: 13px; font-weight: bold; }
-        .toolbar select, .toolbar input[type="number"] {
+        .toolbar select, .toolbar input[type="number"], .toolbar input[type="file"] {
             padding: 5px;
             border-radius: 3px;
             border: 1px solid #ccc;
@@ -57,10 +57,12 @@
             transition: 0.2s;
         }
         .toolbar button:hover { background-color: #d35400; }
-        .btn-print { background-color: #27ae60 !important; }
-        .btn-print:hover { background-color: #2ecc71 !important; }
-        .btn-excel { background-color: #2980b9 !important; }
-        .btn-excel:hover { background-color: #1f618d !important; }
+        .btn-green { background-color: #27ae60 !important; }
+        .btn-green:hover { background-color: #2ecc71 !important; }
+        .btn-blue { background-color: #2980b9 !important; }
+        .btn-blue:hover { background-color: #1f618d !important; }
+        .btn-red { background-color: #c0392b !important; }
+        .btn-red:hover { background-color: #e74c3c !important; }
 
         /* --- A4 TASARIMI VE KURUMSAL ANTET --- */
         .container {
@@ -71,21 +73,34 @@
             padding: 40px;
             box-shadow: 0 0 15px rgba(0,0,0,0.2);
             box-sizing: border-box;
+            position: relative;
         }
 
         .kurumsal-bilgi {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
             border-bottom: 2px solid #E88316;
             padding-bottom: 15px;
             font-size: 15px;
         }
-        .kurumsal-bilgi div {
+        
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            border: 1px dashed #ccc;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
         }
+        .logo-container img { max-width: 100%; max-height: 100%; display: none; }
+        .logo-text { font-size: 11px; color: #7f8c8d; text-align: center; }
+
+        .bilgi-metinleri { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; margin-left: 20px;}
         .kurumsal-bilgi strong { color: #E88316; }
 
         /* --- TABLO TASARIMI (ZEBRA) --- */
@@ -118,7 +133,7 @@
         tbody td:first-child { font-weight: bold; text-align: center; vertical-align: middle; }
         tfoot td { font-weight: bold; background-color: #F9F1EB; font-size: 15px;}
 
-        /* Puan Hücresi Vurgusu */
+        /* Puanlama Hücreleri */
         tbody td:last-child {
             text-align: center;
             vertical-align: middle;
@@ -127,6 +142,7 @@
             color: #c0392b;
             background-color: #fdf5e6;
         }
+        #toplam-puan, #yuzluk-not { font-size: 20px; color: #c0392b; text-align: center; }
 
         .feedback {
             font-size: var(--main-font-size);
@@ -137,6 +153,18 @@
             padding: 10px;
         }
 
+        /* --- İMZA BLOKLARI --- */
+        .imza-blogu {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            text-align: center;
+            font-weight: bold;
+            display: none; /* Varsayılan olarak gizli */
+        }
+        .imza-blogu div { width: 30%; }
+        .imza-bosluk { height: 60px; }
+
         [contenteditable="true"] { outline: none; transition: background 0.2s; }
         [contenteditable="true"]:hover { background-color: rgba(232, 131, 22, 0.1); cursor: text; }
         [contenteditable="true"]:focus { background-color: rgba(232, 131, 22, 0.2); }
@@ -145,15 +173,9 @@
         @media print {
             .toolbar { display: none !important; }
             html, body { background-color: white; margin: 0; padding: 0; height: 100%; }
-            .container { 
-                box-shadow: none; 
-                padding: 0; 
-                width: 100%; 
-                max-width: 100%; 
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-            }
+            .container { box-shadow: none; padding: 0; width: 100%; max-width: 100%; height: 100vh; display: flex; flex-direction: column; }
+            .logo-container { border: none; }
+            .logo-text { display: none; }
             .feedback { border: none; }
             table { flex-grow: 1; margin-bottom: 10px; }
             th, td { padding: 6px 8px !important; font-size: 13px !important; }
@@ -174,43 +196,60 @@
             <option value="Arial, sans-serif">Arial</option>
             <option value='"Courier New", Courier, monospace'>Courier New</option>
         </select>
+        <input type="number" id="fontSizeSelector" value="14" min="10" max="24" onchange="updateStyles()" style="width: 45px;">
     </div>
 
     <div class="toolbar-group">
-        <label>Boyut:</label>
-        <input type="number" id="fontSizeSelector" value="14" min="10" max="24" onchange="updateStyles()" style="width: 50px;">
-    </div>
-
-    <div class="toolbar-group">
-        <label>Şablon:</label>
-        <select id="sablonSecici" style="width: 220px;">
+        <label>Hazır Şablonlar:</label>
+        <select id="sablonSecici" style="width: 200px;">
             <option value="">-- Şablon Seçin --</option>
-            <option value="sayfa65">Sayfa 65 - Bilgi Görseli</option>
-            <option value="sayfa80">Sayfa 80 - Kavram Haritası</option>
-            <option value="sayfa95">Sayfa 95 - Senaryo Tasarımı</option>
-            <option value="sayfa232">Sayfa 232 - Performans (Bilgi Görseli)</option>
-            <option value="sayfa262">Sayfa 262 - Poster Tasarımı</option>
-            <option value="sayfa309">Sayfa 309 - STEM Tasarımı</option>
-            <option value="sayfa319">Sayfa 319 - Küresel Aynalar</option>
-            <option value="sayfa339">Sayfa 339 - Deney Düzeneği</option>
-            <option value="sayfa357">Sayfa 357 - Sunum Değerlendirme</option>
-            <option value="sayfa362">Sayfa 362 - Çalışma Yaprağı (Prizmalar)</option>
-            <option value="sayfa369">Sayfa 369 - Çizim ve Listeler (Mercekler)</option>
+            <optgroup label="Yeni Değerlendirmeler">
+                <option value="sayfaOz">Özdeğerlendirme Formu</option>
+                <option value="sayfaAkran">Akran Değerlendirme</option>
+                <option value="sayfaGrup">Grup Değerlendirmesi</option>
+            </optgroup>
+            <optgroup label="Ders Kitabı (Fizik)">
+                <option value="sayfa65">Sayfa 65 - Bilgi Görseli</option>
+                <option value="sayfa80">Sayfa 80 - Kavram Haritası</option>
+                <option value="sayfa95">Sayfa 95 - Senaryo Tasarımı</option>
+                <option value="sayfa232">Sayfa 232 - Performans Görevi</option>
+                <option value="sayfa262">Sayfa 262 - Poster Tasarımı</option>
+                <option value="sayfa309">Sayfa 309 - STEM Tasarımı</option>
+                <option value="sayfa319">Sayfa 319 - Küresel Aynalar</option>
+                <option value="sayfa339">Sayfa 339 - Deney Düzeneği</option>
+                <option value="sayfa357">Sayfa 357 - Sunum Değerlendirme</option>
+                <option value="sayfa362">Sayfa 362 - Çalışma Yaprağı</option>
+                <option value="sayfa369">Sayfa 369 - Mercekler Çizim</option>
+            </optgroup>
         </select>
-        <button onclick="sablonYukle()">Şablonu Doldur</button>
+        <button onclick="sablonYukle()">Doldur</button>
     </div>
 
-    <div style="margin-left: auto;">
-        <button onclick="satirEkle()">+ Satır Ekle</button>
-        <button class="btn-excel" onclick="excelIndir()">📊 Excel İndir</button>
-        <button class="btn-print" onclick="window.print()">🖨️ PDF Kaydet</button>
+    <div class="toolbar-group">
+        <label>Dışa Aktar/Yükle:</label>
+        <button class="btn-blue" onclick="sablonIndir()">⬇️ Şablon İndir</button>
+        <input type="file" id="jsonYukleyici" accept=".json" onchange="sablonDisaridanYukle(event)" style="width: 150px; display: none;">
+        <button class="btn-blue" onclick="document.getElementById('jsonYukleyici').click()">⬆️ Şablon Yükle</button>
+    </div>
+
+    <div style="margin-left: auto; display: flex; gap: 5px;">
+        <button class="btn-red" onclick="hafizayiTemizle()">🗑️ Temizle</button>
+        <button onclick="satirEkle()">+ Satır</button>
+        <button onclick="imzaGosterGizle()">✍️ İmzalar</button>
+        <button class="btn-green" onclick="window.print()">🖨️ Yazdır / PDF</button>
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="yazdirma-alani">
     
     <div class="kurumsal-bilgi">
-        <div>
+        <label class="logo-container" title="Logo Eklemek İçin Tıklayın">
+            <span class="logo-text">Logo<br>Ekle</span>
+            <img id="okul-logosu" src="" alt="Okul Logosu">
+            <input type="file" accept="image/*" style="display: none;" onchange="logoYukle(event)">
+        </label>
+
+        <div class="bilgi-metinleri">
             <span contenteditable="true" style="font-size: 18px; font-weight: bold; color: #2c3e50;">Okul Adı Buraya Yazılacak...</span>
             <span contenteditable="true"><strong>Ders:</strong> Fizik</span>
             <span contenteditable="true"><strong>Konu:</strong> Performans Görevi Değerlendirmesi</span>
@@ -229,11 +268,11 @@
             </tr>
             <tr>
                 <th contenteditable="true" style="width: 12%;">Ölçütler</th>
-                <th id="th-4" contenteditable="true" style="width: 18%;">Çok İyi<br>(4)</th>
-                <th id="th-3" contenteditable="true" style="width: 18%;">İyi<br>(3)</th>
-                <th id="th-2" contenteditable="true" style="width: 18%;">Orta<br>(2)</th>
-                <th id="th-1" contenteditable="true" style="width: 18%;">Geliştirilebilir<br>(1)</th>
-                <th contenteditable="true" style="width: 10%;">Başarı<br>Puanı</th>
+                <th id="th-4" contenteditable="true" style="width: 16%;">Çok İyi<br>(4)</th>
+                <th id="th-3" contenteditable="true" style="width: 16%;">İyi<br>(3)</th>
+                <th id="th-2" contenteditable="true" style="width: 16%;">Orta<br>(2)</th>
+                <th id="th-1" contenteditable="true" style="width: 16%;">Geliştirilebilir<br>(1)</th>
+                <th contenteditable="true" style="width: 10%;">Başarı Puanı</th>
             </tr>
         </thead>
         <tbody id="rubrik-govdesi">
@@ -249,7 +288,11 @@
         <tfoot>
             <tr>
                 <td contenteditable="true" style="text-align: right;" colspan="5">TOPLAM PUAN:</td>
-                <td id="toplam-puan" style="text-align: center; color: #c0392b; font-size: 20px;">0</td>
+                <td id="toplam-puan">0</td>
+            </tr>
+            <tr>
+                <td contenteditable="true" style="text-align: right; background-color: #fce5cd;" colspan="5">100'LÜK SİSTEMDEKİ NOTU:</td>
+                <td id="yuzluk-not" style="background-color: #fce5cd;">0</td>
             </tr>
         </tfoot>
     </table>
@@ -257,138 +300,112 @@
     <div class="feedback" contenteditable="true">
         Öğretmenin Geri Bildirimi: 
     </div>
+
+    <div class="imza-blogu" id="imza-alani">
+        <div>
+            <div contenteditable="true">Ders Öğretmeni</div>
+            <div class="imza-bosluk"></div>
+            <div contenteditable="true">Ad Soyad</div>
+        </div>
+        <div>
+            <div contenteditable="true">Zümre Başkanı</div>
+            <div class="imza-bosluk"></div>
+            <div contenteditable="true">Ad Soyad</div>
+        </div>
+        <div>
+            <div contenteditable="true">UYGUNDUR<br>.... / .... / 202..</div>
+            <div class="imza-bosluk"></div>
+            <div contenteditable="true">Okul Müdürü</div>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // Veri Tabanı Düzenlendi ve Güvenli Hale Getirildi
+    // VERİ TABANI (Yeni Değerlendirmeler Eklendi)
     const sablonVerileri = {
-        sayfa65: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+        // ---- YENİ EKLENEN ŞABLONLAR ----
+        sayfaOz: {
+            baslik: "Özdeğerlendirme Formu",
+            kriterler: ["Tamamen Katılıyorum<br>(4)", "Katılıyorum<br>(3)", "Kısmen Katılıyorum<br>(2)", "Katılmıyorum<br>(1)"],
             satirlar: [
-                ["İçerik", "Bilgi görselinde konunun bütün temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun bazı temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarından birine yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarına yer verilmemiştir."],
-                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
-                ["Görsellik", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
-                ["Zamanın Etkili Kullanımı", "Bilgi görseli görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Bilgi görseli görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Bilgi görseli görevi için verilen süre etkili bir şekilde kullanılmamış, broşür veya poster geç teslim edilmiştir.", "Bilgi görseli görevi için verilen süre çok aşılmıştır."]
+                ["Sorumluluk Bilinci", "Grup çalışmalarında ve bireysel araştırmalarda üzerime düşen görevleri zamanında, eksiksiz yerine getirdim.", "Görevlerimi genellikle zamanında yerine getirdim, ancak ufak gecikmeler yaşadım.", "Görevlerimi yerine getirirken sık sık hatırlatılmaya ihtiyaç duydum.", "Üzerime düşen görevleri yerine getirmedim."],
+                ["Araştırma ve Kaynak", "Araştırma sürecinde güvenilir, farklı ve çeşitli bilgi kaynaklarından etkin bir şekilde yararlandım.", "Araştırma yaparken kaynak kullandım ancak çeşitlilik sınırlıydı.", "Araştırma sürecinde tek bir kaynağa bağlı kaldım ve derinlemesine inceleme yapmadım.", "Araştırma sürecinde bilgi kaynaklarını kullanmadım."],
+                ["Planlı Çalışma", "Çalışmamı yaparken zamanı çok verimli kullandım, planlı ve son derece düzenli ilerledim.", "Çalışma sürecinde genel olarak planlıydım ancak zaman yönetimi konusunda ufak sorunlar yaşadım.", "Planlı çalışma konusunda zorlandım, işlerimin çoğu son ana kaldı.", "Hiçbir planlama yapmadan, tamamen düzensiz bir şekilde çalıştım."],
+                ["Problem Çözme", "Karşılaştığım problemleri analiz edip yaratıcı ve etkili çözüm yolları üreterek çaba gösterdim.", "Karşılaştığım problemleri çözmek için uğraştım ancak bazen yardıma ihtiyaç duydum.", "Karşılaştığım problemlerde çabuk pes ettim ve çözüm üretmekte yetersiz kaldım.", "Karşılaştığım problemleri çözmek için hiçbir çaba göstermedim."],
+                ["Eleştiriye Açıklık", "Geri bildirimleri dikkatle dinledim, eleştirilere açık oldum ve bu doğrultuda çalışmamı geliştirdim.", "Geri bildirimleri dikkate aldım ancak çalışmamı geliştirme konusunda eksik kaldım.", "Geri bildirimleri dinlemekte zorlandım ve eleştirileri kabul etmekte direnç gösterdim.", "Eleştirilere tamamen kapalı oldum ve çalışmamda hiçbir değişiklik yapmadım."]
             ]
         },
-        sayfa80: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+        sayfaAkran: {
+            baslik: "Akran Değerlendirme Formu",
+            kriterler: ["Tamamen Katılıyorum<br>(4)", "Katılıyorum<br>(3)", "Kısmen Katılıyorum<br>(2)", "Katılmıyorum<br>(1)"],
             satirlar: [
-                ["İçerik", "Çembersel hareketin temel değişkenleri arasındaki ilişki geniş kapsamlı biçimde sunulmuştur.", "Çembersel hareketin temel değişkenleri arasındaki ilişki yeterli biçimde sunulmuş, yan disiplinler göz ardı edilmiştir.", "Çembersel hareketin temel değişkenleri arasındaki ilişki kısmen sunulmuş, ana disiplinlere odaklanılmıştır.", "Çembersel hareketin temel değişkenleri arasındaki ilişkiye sınırlı sayıda yer verilmiştir."],
-                ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişki doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişki kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."],
-                ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bilgilerin çok azı mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."],
-                ["Görsellik", "Kavram haritası görsel ögeler bakımından çok etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından kısmen etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından az etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından etkileyici ve dikkat çekici ögeler barındırmamaktadır."],
-                ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."],
-                ["Özgünlük", "Kavram haritası özgün ögeler içermektedir.", "Kavram haritası kısmen özgün ögeler içermektedir.", "Kavram haritası oldukça az özgün ögeler içermektedir.", "Kavram haritası diğer örneklere benzer olup özgün ögeler içermemektedir."]
+                ["Görev Bilinci", "Grup çalışmalarında üzerine düşen tüm görevleri tam zamanında ve yüksek kalitede yaptı.", "Görevlerini genellikle zamanında yaptı, küçük hatırlatmalara ihtiyaç duydu.", "Görevlerini geciktirdi ve grubun çalışmasını yavaşlattı.", "Üzerine düşen hiçbir görevi yerine getirmedi."],
+                ["Grup Uyumu", "Grup arkadaşlarıyla her zaman son derece uyumlu, anlayışlı ve saygılı bir şekilde çalıştı.", "Genel olarak grup uyumuna katkı sağladı, nadiren fikir ayrılıkları yaşadı.", "Grup arkadaşlarıyla uyum sağlamakta zorlandı, zaman zaman gerginliklere neden oldu.", "Grup arkadaşlarıyla hiçbir şekilde uyum sağlayamadı, saygısız tutumlar sergiledi."],
+                ["Fikir Paylaşımı", "Fikirlerini açık, net bir şekilde ifade etti ve grup içi tartışmalara çok değerli katkılar sağladı.", "Fikirlerini paylaştı ancak tartışmalara yön verme konusunda çekimser kaldı.", "Fikirlerini ifade etmekte zorlandı, grup içi iletişimde pasif kaldı.", "Hiçbir şekilde fikir belirtmedi ve tartışmalara katılmadı."],
+                ["Problem Çözme", "Grup içindeki problemleri ve anlaşmazlıkları çözmede yapıcı, uzlaştırıcı bir rol oynadı.", "Problemlerin çözümünde tarafsız kaldı, sürece müdahale etmedi.", "Problemlerin çözümünden kaçındı ve sorumluluk almadı.", "Problemleri çözmek yerine yeni problemler üretti ve grubun ahengini bozdu."],
+                ["Saygı ve Dinleme", "Diğer grup üyelerinin fikirlerini dikkatle dinledi, değer verdi ve farklı görüşlere her zaman saygı duydu.", "Diğer üyeleri dinledi ancak kendi fikirlerini ön planda tutmaya çalıştı.", "Başkalarının fikirlerini dinlemekte sabırsızdı, sık sık söz kesti.", "Diğer üyelerin fikirlerine hiçbir şekilde değer vermedi ve dinlemedi."]
             ]
         },
-        sayfa95: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"],
+        sayfaGrup: {
+            baslik: "Grup Değerlendirmesi Formu",
+            kriterler: ["Tamamen Katılıyorum<br>(4)", "Katılıyorum<br>(3)", "Kısmen Katılıyorum<br>(2)", "Katılmıyorum<br>(1)"],
             satirlar: [
-                ["Senaryo", "Konunun bütün değişkenleri senaryoda verilmiştir.", "İyileştirme için senaryoya küçük ilaveler yapılmalıdır.", "Konunun bazı değişkenleri senaryoda verilmemiştir.", "Konunun büyük kısmı senaryoda verilmemiştir."],
-                ["Özgünlük", "Senaryo özgün ve yenilikçi bir yaklaşım içermektedir.", "Senaryo genel olarak özgün bir yaklaşım içermektedir.", "Senaryoda yer yer özgün ve yenilikçi bir yaklaşım görülmektedir.", "Senaryo özgün ve yenilikçi bir yaklaşım içermemektedir."],
-                ["Malzeme Seçimi", "Malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Bazı malzemeler seçilmiş ancak uygun değildir.", "Uygun olmayan malzemeler seçilmiştir."],
-                ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."],
-                ["Kullanılabilirlik", "Ürün sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."]
+                ["Görev Dağılımı", "Grup olarak görev dağılımını son derece adil, üyelerin yeteneklerine ve ilgi alanlarına göre yaptık.", "Görev dağılımını yaptık ancak adalet ve yetenek eşleşmesinde küçük pürüzler yaşandı.", "Görev dağılımı adaletsizdi, işin büyük kısmı birkaç kişinin üzerine kaldı.", "Hiçbir görev dağılımı yapmadık, tamamen karmaşa içinde çalıştık."],
+                ["Zaman Yönetimi", "Oluşturduğumuz çalışma planına harfiyen uyduk ve zamanı çok verimli bir şekilde kullandık.", "Plana genel olarak uyduk ancak bazı teslimatları son ana bıraktık.", "Zaman yönetimi konusunda başarısızdık, işler sürekli gecikti.", "Hiçbir plana uymadık ve çalışmayı zamanında yetiştiremedik."],
+                ["İletişim ve Saygı", "Grup içi iletişimimiz çok güçlüydü, her zaman anlayış ve saygı çerçevesinde yardımlaşarak ilerledik.", "İletişimimiz yeterliydi ancak zaman zaman kopukluklar ve küçük tartışmalar yaşadık.", "Grup içi iletişim zayıftı, birbirimizden habersiz çalıştığımız anlar çok oldu.", "İletişim tamamen kopuktu, grupta saygı eksikliği hakimdi."],
+                ["Ortak Karar Alma", "Her aşamada kararları ortak aldık ve gerçek bir takım ruhu, iş birliği ile hareket ettik.", "Kararları çoğunlukla beraber aldık ancak bazen bireysel inisiyatifler ön plana çıktı.", "Ortak karar almakta zorlandık, genellikle baskın olan üyelerin dediği oldu.", "Ortak karar alma mekanizması hiç işlemedi, herkes kendi bildiğini okudu."],
+                ["Eşit Katkı", "Ortaya çıkan ürüne, çalışmaya ve sunuma istisnasız hepimiz eşit düzeyde katkı sağladık.", "Çalışmaya katılım genel olarak iyiydi ancak bazı üyelerin katkısı diğerlerinden biraz daha azdı.", "Katkı dağılımı çok dengesizdi, çalışmayı sadece 1-2 kişi üstlendi.", "Grubun büyük bir kısmı çalışmaya hiçbir katkı sağlamadı."]
             ]
         },
-        sayfa232: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Bilgi görselinde konunun bütün temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun bazı temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarından birine yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarına yer verilmemiştir."],
-                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
-                ["Görsellik", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
-                ["Zamanın Etkili Kullanımı", "Performans görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Performans görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Performans görevi için verilen süre etkili bir şekilde kullanılamamış, bilgi görseli geç teslim edilmiştir.", "Performans görevi için verilen süre çok aşılmıştır."]
-            ]
-        },
-        sayfa262: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Posterde konunun bütün temel kavramlarına yer verilmiştir.", "Posterde konunun bazı temel kavramlarına yer verilmiştir.", "Posterde konunun temel kavramlarından birine yer verilmiştir.", "Posterde konunun temel kavramlarına yer verilmemiştir."],
-                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
-                ["Görsellik", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
-                ["Zamanın Etkili Kullanımı", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Poster hazırlama görevi için verilen süre çok aşılmıştır."]
-            ]
-        },
-        sayfa309: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"],
-            satirlar: [
-                ["Günlük Hayat Problemi Çözümü", "Tasarım günlük hayat problemine çözüm sunmuştur.", "Tasarıma günlük hayat problemine çözüm bakımından küçük ilaveler gereklidir.", "Tasarım günlük hayat problemine kısmen çözüm sunmuştur.", "Tasarım günlük hayat problemine çözüm sunmamıştır."],
-                ["Özgünlük", "Yenilikçi ve yaratıcı tasarım yaklaşımları geliştirilmiştir.", "Birkaç standart unsur içeren yaratıcı bir tasarım yapılmıştır.", "Minimum yaratıcılığa sahip temel bir tasarım yapılmıştır.", "Tasarımda yaratıcılık bulunmamaktadır."],
-                ["Malzeme Seçimi", "Yalıtımı destekleyen malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Seçilen malzemelerin çok azı uygundur.", "Uygun olmayan malzemeler seçilmiştir."],
-                ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."],
-                ["Kullanılabilirlik", "Ürün sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."],
-                ["STEM Döngüsü", "STEM ilkelerinin tümü karşılanmıştır.", "STEM ilkeleri çoğu alanda iyi biçimde karşılanmıştır.", "Bazı alanlarda temel ilkeler karşılanmıştır.", "STEM ilkeleri sınırlı uygulanmıştır."]
-            ]
-        },
-        sayfa319: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Küresel aynalar ile ilgili bilgiler geniş kapsamlı biçimde sunulmuştur.", "Küresel aynalar ile ilgili bilgiler yeterli biçimde sunulmuş, yan disiplinler göz ardı edilmiştir.", "Küresel aynalar ile ilgili bilgiler kısmen sunulmuş, ana disiplinlere odaklanılmıştır.", "Küresel aynalar ile ilgili bilgilere sınırlı sayıda yer verilmiştir."],
-                ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişki doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişki kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."],
-                ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."],
-                ["Görsellik", "Görsel ögeler bakımından çok etkileyici ve dikkat çekicidir.", "Görsel ögeler bakımından kısmen etkileyici ve dikkat çekicidir.", "Görsel ögeler bakımından az etkileyici ve dikkat çekicidir.", "Görsel bakımdan etkileyici ve dikkat çekici ögeler barındırmamaktadır."],
-                ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]
-            ]
-        },
-        sayfa339: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"],
-            satirlar: [
-                ["Deney Düzeneği", "Deney düzeneği ile ışığın kırılma yasaları açıklanmıştır.", "Deney düzeneği ile ışığın kırılma yasalarının açıklanabilmesi için küçük ilaveler gereklidir.", "Deney düzeneği ile ışığın kırılma yasaları kısmen açıklanmıştır.", "Deney düzeneği ile ışığın kırılma yasaları açıklanamamıştır."],
-                ["Özgünlük", "Yenilikçi ve yaratıcı tasarım yaklaşımları mevcuttur.", "Birkaç standart unsur içeren yaratıcı bir tasarım yapılmıştır.", "Minimum yaratıcılığa sahip temel bir tasarım yapılmıştır.", "Tasarımda yaratıcılık bulunmamaktadır."],
-                ["Malzeme Seçimi", "Malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Seçilen malzemelerin çok azı uygundur.", "Uygun olmayan malzemeler seçilmiştir."],
-                ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."],
-                ["Kullanılabilirlik", "Düzenek sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."]
-            ]
-        },
-        sayfa357: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Sunumda konunun bütün temel kavramlarına yer verilmiştir.", "Sunumda konunun bazı temel kavramlarına yer verilmiştir.", "Sunumda konunun temel kavramlarından birine yer verilmiştir.", "Sunumda konunun temel kavramlarına yer verilmemiştir."],
-                ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."],
-                ["Görsellik", "Sunumda renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."],
-                ["Zamanın Etkili Kullanımı", "Sunum hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Sunum hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Sunum hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Sunum hazırlama görevi için verilen süre çok aşılmıştır."]
-            ]
-        },
-        sayfa362: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Prizmalar ile ilgili çalışma yaprağına bilgiler doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgilerin büyük kısmı doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgiler kısmen doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgiler doğru biçimde yazılmamıştır."],
-                ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişkiler doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişkiler kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."],
-                ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."],
-                ["Görsellik ve Sembol Kullanımı", "Görsel ögeler bakımından çizimler doğrudur. Semboller amaca uygun bir biçimde kullanılmıştır.", "Görsel ögeler bakımından çizimler kısmen doğrudur. Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Görsel ögeler bakımından çizimlerin çok azı doğrudur. Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Görsel ögeler bakımdan çizimler doğru değildir. Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]
-            ]
-        },
-        sayfa369: {
-            baslik: "Dereceli Puanlama Anahtarı",
-            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
-            satirlar: [
-                ["İçerik", "Mercekler ile ilgili çizimler ve listeler doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listelerin büyük kısmı doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listeler kısmen doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listeler doğru biçimde yapılmamıştır."],
-                ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişkiler doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişkiler kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."],
-                ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."],
-                ["Görsellik", "Görsel ögeler bakımından çizimler doğrudur.", "Görsel ögeler bakımından çizimler kısmen doğrudur.", "Görsel ögeler bakımından çizimlerin çok azı doğrudur.", "Görsel ögeler bakımından çizimler doğru değildir."],
-                ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]
-            ]
-        }
+        // ---- DERS KİTABI ŞABLONLARI ----
+        sayfa65: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Bilgi görselinde konunun bütün temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun bazı temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarından birine yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarına yer verilmemiştir."], ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."], ["Görsellik", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."], ["Zamanın Etkili Kullanımı", "Bilgi görseli görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Bilgi görseli görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Bilgi görseli görevi için verilen süre etkili bir şekilde kullanılmamış, broşür veya poster geç teslim edilmiştir.", "Bilgi görseli görevi için verilen süre çok aşılmıştır."]] },
+        sayfa80: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Çembersel hareketin temel değişkenleri arasındaki ilişki geniş kapsamlı biçimde sunulmuştur.", "Çembersel hareketin temel değişkenleri arasındaki ilişki yeterli biçimde sunulmuş, yan disiplinler göz ardı edilmiştir.", "Çembersel hareketin temel değişkenleri arasındaki ilişki kısmen sunulmuş, ana disiplinlere odaklanılmıştır.", "Çembersel hareketin temel değişkenleri arasındaki ilişkiye sınırlı sayıda yer verilmiştir."], ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişki doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişki kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."], ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bilgilerin çok azı mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."], ["Görsellik", "Kavram haritası görsel ögeler bakımından çok etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından kısmen etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından az etkileyici ve dikkat çekicidir.", "Kavram haritası görsel ögeler bakımından etkileyici ve dikkat çekici ögeler barındırmamaktadır."], ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."], ["Özgünlük", "Kavram haritası özgün ögeler içermektedir.", "Kavram haritası kısmen özgün ögeler içermektedir.", "Kavram haritası oldukça az özgün ögeler içermektedir.", "Kavram haritası diğer örneklere benzer olup özgün ögeler içermemektedir."]] },
+        sayfa95: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"], satirlar: [["Senaryo", "Konunun bütün değişkenleri senaryoda verilmiştir.", "İyileştirme için senaryoya küçük ilaveler yapılmalıdır.", "Konunun bazı değişkenleri senaryoda verilmemiştir.", "Konunun büyük kısmı senaryoda verilmemiştir."], ["Özgünlük", "Senaryo özgün ve yenilikçi bir yaklaşım içermektedir.", "Senaryo genel olarak özgün bir yaklaşım içermektedir.", "Senaryoda yer yer özgün ve yenilikçi bir yaklaşım görülmektedir.", "Senaryo özgün ve yenilikçi bir yaklaşım içermemektedir."], ["Malzeme Seçimi", "Malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Bazı malzemeler seçilmiş ancak uygun değildir.", "Uygun olmayan malzemeler seçilmiştir."], ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."], ["Kullanılabilirlik", "Ürün sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."]] },
+        sayfa232: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Bilgi görselinde konunun bütün temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun bazı temel kavramlarına yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarından birine yer verilmiştir.", "Bilgi görselinde konunun temel kavramlarına yer verilmemiştir."], ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."], ["Görsellik", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Bilgi görselinde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."], ["Zamanın Etkili Kullanımı", "Performans görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Performans görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Performans görevi için verilen süre etkili bir şekilde kullanılamamış, bilgi görseli geç teslim edilmiştir.", "Performans görevi için verilen süre çok aşılmıştır."]] },
+        sayfa262: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Posterde konunun bütün temel kavramlarına yer verilmiştir.", "Posterde konunun bazı temel kavramlarına yer verilmiştir.", "Posterde konunun temel kavramlarından birine yer verilmiştir.", "Posterde konunun temel kavramlarına yer verilmemiştir."], ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."], ["Görsellik", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Posterde renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Posterde renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."], ["Zamanın Etkili Kullanımı", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Poster hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Poster hazırlama görevi için verilen süre çok aşılmıştır."]] },
+        sayfa309: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"], satirlar: [["Günlük Hayat Problemi Çözümü", "Tasarım günlük hayat problemine çözüm sunmuştur.", "Tasarıma günlük hayat problemine çözüm bakımından küçük ilaveler gereklidir.", "Tasarım günlük hayat problemine kısmen çözüm sunmuştur.", "Tasarım günlük hayat problemine çözüm sunmamıştır."], ["Özgünlük", "Yenilikçi ve yaratıcı tasarım yaklaşımları geliştirilmiştir.", "Birkaç standart unsur içeren yaratıcı bir tasarım yapılmıştır.", "Minimum yaratıcılığa sahip temel bir tasarım yapılmıştır.", "Tasarımda yaratıcılık bulunmamaktadır."], ["Malzeme Seçimi", "Yalıtımı destekleyen malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Seçilen malzemelerin çok azı uygundur.", "Uygun olmayan malzemeler seçilmiştir."], ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."], ["Kullanılabilirlik", "Ürün sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."], ["STEM Döngüsü", "STEM ilkelerinin tümü karşılanmıştır.", "STEM ilkeleri çoğu alanda iyi biçimde karşılanmıştır.", "Bazı alanlarda temel ilkeler karşılanmıştır.", "STEM ilkeleri sınırlı uygulanmıştır."]] },
+        sayfa319: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Küresel aynalar ile ilgili bilgiler geniş kapsamlı biçimde sunulmuştur.", "Küresel aynalar ile ilgili bilgiler yeterli biçimde sunulmuş, yan disiplinler göz ardı edilmiştir.", "Küresel aynalar ile ilgili bilgiler kısmen sunulmuş, ana disiplinlere odaklanılmıştır.", "Küresel aynalar ile ilgili bilgilere sınırlı sayıda yer verilmiştir."], ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişki doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişki kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."], ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."], ["Görsellik", "Görsel ögeler bakımından çok etkileyici ve dikkat çekicidir.", "Görsel ögeler bakımından kısmen etkileyici ve dikkat çekicidir.", "Görsel ögeler bakımından az etkileyici ve dikkat çekicidir.", "Görsel bakımdan etkileyici ve dikkat çekici ögeler barındırmamaktadır."], ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]] },
+        sayfa339: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Mükemmel<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilmeli<br>(1)"], satirlar: [["Deney Düzeneği", "Deney düzeneği ile ışığın kırılma yasaları açıklanmıştır.", "Deney düzeneği ile ışığın kırılma yasalarının açıklanabilmesi için küçük ilaveler gereklidir.", "Deney düzeneği ile ışığın kırılma yasaları kısmen açıklanmıştır.", "Deney düzeneği ile ışığın kırılma yasaları açıklanamamıştır."], ["Özgünlük", "Yenilikçi ve yaratıcı tasarım yaklaşımları mevcuttur.", "Birkaç standart unsur içeren yaratıcı bir tasarım yapılmıştır.", "Minimum yaratıcılığa sahip temel bir tasarım yapılmıştır.", "Tasarımda yaratıcılık bulunmamaktadır."], ["Malzeme Seçimi", "Malzemeler özenle seçilmiştir.", "Malzeme seçimi kısmen uygundur.", "Seçilen malzemelerin çok azı uygundur.", "Uygun olmayan malzemeler seçilmiştir."], ["Kaynak Kullanımı", "Çalışma amaca uygun, zengin ve farklı birçok kaynakla desteklenmiştir.", "Çalışma amaca uygun birkaç kaynakla desteklenmiştir.", "Çalışma amaca uygun bir kaynakla desteklenmiştir.", "Çalışma amaca uygun kaynaklarla desteklenmemiştir."], ["Kullanılabilirlik", "Düzenek sorunsuz ve etkili biçimde çalışmaktadır.", "Küçük sorunlar olmasına rağmen ürün işlevseldir.", "Bazı işlevsel yönlerde önemli sorunlar mevcuttur.", "İşlevsellik sınırlı kalmış veya büyük tasarım kusurları mevcuttur."]] },
+        sayfa357: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Sunumda konunun bütün temel kavramlarına yer verilmiştir.", "Sunumda konunun bazı temel kavramlarına yer verilmiştir.", "Sunumda konunun temel kavramlarından birine yer verilmiştir.", "Sunumda konunun temel kavramlarına yer verilmemiştir."], ["Günlük Hayat Bağlamı", "Konunun temel kavramlarının tümü günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarının birçoğu günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramlarından çok azı günlük hayat örnekleri ile ilişkilendirilmiştir.", "Konunun temel kavramları günlük hayat örnekleri ile ilişkilendirilmemiştir."], ["Görsellik", "Sunumda renk, desen, doku gibi görsel unsurlar kullanılmış ve estetik ögelere yer verilmiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar kısmen kullanılmış ve estetik ögelere yer verilmiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar içerikle uyumlu değildir. Estetik ögelere yer verilmemiştir.", "Sunumda renk, desen, doku gibi görsel unsurlar kullanılmamış ve estetik ögelere yer verilmemiştir."], ["Zamanın Etkili Kullanımı", "Sunum hazırlama görevi için verilen süre etkili bir şekilde kullanılmıştır.", "Sunum hazırlama görevi için verilen süre kısmen etkili bir şekilde kullanılmıştır.", "Sunum hazırlama görevi için verilen süre etkili bir şekilde kullanılamamış, broşür veya poster geç teslim edilmiştir.", "Sunum hazırlama görevi için verilen süre çok aşılmıştır."]] },
+        sayfa362: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Prizmalar ile ilgili çalışma yaprağına bilgiler doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgilerin büyük kısmı doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgiler kısmen doğru biçimde yazılmıştır.", "Prizmalar ile ilgili çalışma yaprağına bilgiler doğru biçimde yazılmamıştır."], ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişkiler doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişkiler kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."], ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."], ["Görsellik ve Sembol Kullanımı", "Görsel ögeler bakımından çizimler doğrudur. Semboller amaca uygun bir biçimde kullanılmıştır.", "Görsel ögeler bakımından çizimler kısmen doğrudur. Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Görsel ögeler bakımından çizimlerin çok azı doğrudur. Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Görsel ögeler bakımdan çizimler doğru değildir. Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]] },
+        sayfa369: { baslik: "Dereceli Puanlama Anahtarı", kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"], satirlar: [["İçerik", "Mercekler ile ilgili çizimler ve listeler doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listelerin büyük kısmı doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listeler kısmen doğru biçimde yapılmıştır.", "Mercekler ile ilgili çizimler ve listeler doğru biçimde yapılmamıştır."], ["Kavramlar Arası İlişki", "Kavramlar arasındaki ilişkiler doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasındaki ilişkiler kısmen doğru şekilde kurulmuş ve hiyerarşik yapı benimsenmiştir.", "Kavramlar arasında çok sayıda yanlış bağlantı kurulmuş ve hiyerarşik yapıya çok az dikkat edilmiştir.", "Kavramlar arasında kurulan ilişkiler hatalıdır ve hiyerarşik yapıya dikkat edilmemiştir."], ["Dağılım", "Bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Bazı bilgiler mantıklı ve sistemli biçimde dağıtılmıştır.", "Çok az bilgi mantıklı ve sistemli biçimde dağıtılmıştır.", "Hiçbir bilgi mantıklı ve sistemli biçimde dağıtılmamıştır."], ["Görsellik", "Görsel ögeler bakımından çizimler doğrudur.", "Görsel ögeler bakımından çizimler kısmen doğrudur.", "Görsel ögeler bakımından çizimlerin çok azı doğrudur.", "Görsel ögeler bakımından çizimler doğru değildir."], ["Sembollerin Kullanımı", "Semboller amaca uygun bir biçimde kullanılmıştır.", "Semboller yeterince yoğunlukta ancak anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda, anlam ve çeşitlilikten uzak kullanılmıştır.", "Semboller az sayıda kullanılmış ve amaca uygun bir biçimde kullanılmamıştır."]] }
     };
 
+    // YAZI TİPİ GÜNCELLEME
     function updateStyles() {
         const font = document.getElementById('fontSelector').value;
         const size = document.getElementById('fontSizeSelector').value + 'px';
         document.documentElement.style.setProperty('--main-font', font);
         document.documentElement.style.setProperty('--main-font-size', size);
+        veriKaydet();
     }
 
+    // LOGO YÜKLEME SİSTEMİ
+    function logoYukle(event) {
+        const resim = document.getElementById('okul-logosu');
+        const yazi = document.querySelector('.logo-text');
+        
+        if (event.target.files && event.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                resim.src = e.target.result;
+                resim.style.display = 'block';
+                yazi.style.display = 'none';
+                veriKaydet();
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    }
+
+    // İMZA GÖSTER GİZLE
+    function imzaGosterGizle() {
+        const alan = document.getElementById('imza-alani');
+        alan.style.display = alan.style.display === 'flex' ? 'none' : 'flex';
+        veriKaydet();
+    }
+
+    // SATIR EKLEME
     function satirEkle() {
         const govde = document.getElementById('rubrik-govdesi');
         const yeniSatir = document.createElement('tr');
@@ -401,56 +418,51 @@
             <td contenteditable="true" class="puan-hucresi"></td>
         `;
         govde.appendChild(yeniSatir);
+        veriKaydet();
     }
 
-    // GÜNCELLENMİŞ VE HATALARA KARŞI KORUMALI ŞABLON YÜKLEME FONKSİYONU
+    // ŞABLON YÜKLEME
     function sablonYukle() {
-        try {
-            const secim = document.getElementById('sablonSecici').value;
-            
-            // Eğer seçim yapılmadıysa kullanıcıyı uyar (Eski kodda sessizce kapanıyordu)
-            if (!secim) {
-                alert("⚠️ Lütfen 'Şablonu Doldur' butonuna basmadan önce listeden bir şablon seçiniz.");
-                return;
-            }
+        const secim = document.getElementById('sablonSecici').value;
+        if (!secim) return;
 
-            const veri = sablonVerileri[secim];
-            const govde = document.getElementById('rubrik-govdesi');
-            
-            document.getElementById('ana-baslik').innerText = veri.baslik;
-            document.getElementById('th-4').innerHTML = veri.kriterler[0];
-            document.getElementById('th-3').innerHTML = veri.kriterler[1];
-            document.getElementById('th-2').innerHTML = veri.kriterler[2];
-            document.getElementById('th-1').innerHTML = veri.kriterler[3];
-
-            govde.innerHTML = ""; 
-            
-            veri.satirlar.forEach(satirVerisi => {
-                const tr = document.createElement('tr');
-                satirVerisi.forEach(hucreMetni => {
-                    const td = document.createElement('td');
-                    td.contentEditable = "true";
-                    td.innerHTML = hucreMetni;
-                    tr.appendChild(td);
-                });
-                
-                const tdPuan = document.createElement('td');
-                tdPuan.contentEditable = "true";
-                tdPuan.className = "puan-hucresi";
-                tr.appendChild(tdPuan);
-                govde.appendChild(tr);
-            });
-            
-            hesapla(); // Tablo yüklenince puanı sıfırla
-            
-        } catch (error) {
-            console.error(error);
-            alert("Sistemsel bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.");
-        }
+        const veri = sablonVerileri[secim];
+        tabloyuOlustur(veri.baslik, veri.kriterler, veri.satirlar);
     }
 
-    // OTOMATİK PUAN HESAPLAMA SİSTEMİ
-    document.getElementById('rubrik-govdesi').addEventListener('input', function(e) {
+    function tabloyuOlustur(baslik, kriterler, satirlar) {
+        const govde = document.getElementById('rubrik-govdesi');
+        
+        document.getElementById('ana-baslik').innerText = baslik;
+        document.getElementById('th-4').innerHTML = kriterler[0];
+        document.getElementById('th-3').innerHTML = kriterler[1];
+        document.getElementById('th-2').innerHTML = kriterler[2];
+        document.getElementById('th-1').innerHTML = kriterler[3];
+
+        govde.innerHTML = ""; 
+        
+        satirlar.forEach(satirVerisi => {
+            const tr = document.createElement('tr');
+            satirVerisi.forEach(hucreMetni => {
+                const td = document.createElement('td');
+                td.contentEditable = "true";
+                td.innerHTML = hucreMetni;
+                tr.appendChild(td);
+            });
+            const tdPuan = document.createElement('td');
+            tdPuan.contentEditable = "true";
+            tdPuan.className = "puan-hucresi";
+            tr.appendChild(tdPuan);
+            govde.appendChild(tr);
+        });
+        
+        hesapla();
+        veriKaydet();
+    }
+
+    // 100'LÜK SİSTEM VE PUAN HESAPLAMA SİSTEMİ
+    document.getElementById('yazdirma-alani').addEventListener('input', function(e) {
+        veriKaydet();
         if(e.target && e.target.classList.contains('puan-hucresi')) {
             hesapla();
         }
@@ -458,6 +470,11 @@
 
     function hesapla() {
         let toplam = 0;
+        let satirSayisi = 0;
+        
+        const satirlar = document.querySelectorAll('#rubrik-govdesi tr');
+        satirSayisi = satirlar.length;
+
         const puanHucreleri = document.querySelectorAll('.puan-hucresi');
         puanHucreleri.forEach(hucre => {
             const puan = parseInt(hucre.innerText.trim());
@@ -465,26 +482,84 @@
                 toplam += puan;
             }
         });
+        
         document.getElementById('toplam-puan').innerText = toplam;
+
+        // 100'lük sisteme çevirme (Örnek: Maksimum puan 4 ise: satır x 4 üzerinden hesaplar)
+        const maxPuan = satirSayisi * 4;
+        let yuzlukNot = 0;
+        if(maxPuan > 0) {
+            yuzlukNot = Math.round((toplam / maxPuan) * 100);
+        }
+        document.getElementById('yuzluk-not').innerText = yuzlukNot;
+        veriKaydet();
     }
 
-    // EXCEL OLARAK İNDİRME SİSTEMİ
-    function excelIndir() {
-        const table = document.getElementById("puanlama-tablosu");
-        let html = table.outerHTML;
-        
-        // Excel uyumluluğu için Türkçe karakter formatı
-        let excelDosyasi = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${html}</body></html>`;
-        
-        const blob = new Blob([excelDosyasi], { type: 'application/vnd.ms-excel' });
-        const url = URL.createObjectURL(blob);
+    // ŞABLONU İNDİRME (DIŞA AKTARMA)
+    function sablonIndir() {
+        const satirlar = [];
+        document.querySelectorAll('#rubrik-govdesi tr').forEach(tr => {
+            const hucreler = [];
+            tr.querySelectorAll('td:not(.puan-hucresi)').forEach(td => hucreler.push(td.innerText));
+            satirlar.push(hucreler);
+        });
+
+        const ozelSablon = {
+            baslik: document.getElementById('ana-baslik').innerText,
+            kriterler: [
+                document.getElementById('th-4').innerHTML,
+                document.getElementById('th-3').innerHTML,
+                document.getElementById('th-2').innerHTML,
+                document.getElementById('th-1').innerHTML
+            ],
+            satirlar: satirlar
+        };
+
+        const blob = new Blob([JSON.stringify(ozelSablon, null, 2)], {type: "application/json"});
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'Dereceli_Puanlama_Anahtari.xls';
-        document.body.appendChild(a);
+        a.href = URL.createObjectURL(blob);
+        a.download = "Ozel_Rubrik_Sablonu.json";
         a.click();
-        document.body.removeChild(a);
     }
+
+    // ŞABLONU DIŞARIDAN YÜKLEME
+    function sablonDisaridanYukle(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const veri = JSON.parse(e.target.result);
+                tabloyuOlustur(veri.baslik, veri.kriterler, veri.satirlar);
+                alert("Şablon başarıyla yüklendi!");
+            } catch (err) {
+                alert("Geçersiz şablon dosyası.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // LOCAL STORAGE (AKILLI HAFIZA) SİSTEMİ
+    function veriKaydet() {
+        const htmlIcerik = document.getElementById('yazdirma-alani').innerHTML;
+        localStorage.setItem('ogretmenAsistanHafiza', htmlIcerik);
+    }
+
+    function hafizayiTemizle() {
+        if(confirm("Tüm veriler temizlenecek, emin misiniz?")) {
+            localStorage.removeItem('ogretmenAsistanHafiza');
+            location.reload();
+        }
+    }
+
+    window.onload = function() {
+        const kayitliVeri = localStorage.getItem('ogretmenAsistanHafiza');
+        if(kayitliVeri) {
+            document.getElementById('yazdirma-alani').innerHTML = kayitliVeri;
+        }
+    }
+
 </script>
 
 </body>
