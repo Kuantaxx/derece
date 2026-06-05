@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Gelişmiş Dereceli Puanlama Anahtarı Oluşturucu</title>
+    <title>Profesyonel Dereceli Puanlama Anahtarı Oluşturucu</title>
     <style>
         :root {
             --main-font: "Times New Roman", Times, serif;
@@ -28,7 +28,7 @@
             font-family: Arial, sans-serif;
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 15px;
             align-items: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
@@ -46,14 +46,6 @@
             border-radius: 3px;
             border: 1px solid #ccc;
         }
-        .toolbar input[type="color"] {
-            border: none;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            padding: 0;
-            background: transparent;
-        }
         .toolbar button {
             background-color: #e67e22;
             color: white;
@@ -67,8 +59,10 @@
         .toolbar button:hover { background-color: #d35400; }
         .btn-print { background-color: #27ae60 !important; }
         .btn-print:hover { background-color: #2ecc71 !important; }
+        .btn-excel { background-color: #2980b9 !important; }
+        .btn-excel:hover { background-color: #1f618d !important; }
 
-        /* --- TABLO TASARIMI (ZEBRA) --- */
+        /* --- A4 TASARIMI VE KURUMSAL ANTET --- */
         .container {
             background-color: white;
             width: 100%;
@@ -79,6 +73,22 @@
             box-sizing: border-box;
         }
 
+        .kurumsal-bilgi {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #E88316;
+            padding-bottom: 15px;
+            font-size: 15px;
+        }
+        .kurumsal-bilgi div {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .kurumsal-bilgi strong { color: #E88316; }
+
+        /* --- TABLO TASARIMI (ZEBRA) --- */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -106,13 +116,25 @@
         tbody tr:nth-child(even) td { background-color: #F9F1EB; }
         tbody tr:nth-child(odd) td { background-color: #ffffff; }
         tbody td:first-child { font-weight: bold; text-align: center; vertical-align: middle; }
-        tfoot td { font-weight: bold; background-color: #F9F1EB; }
+        tfoot td { font-weight: bold; background-color: #F9F1EB; font-size: 15px;}
+
+        /* Puan Hücresi Vurgusu */
+        tbody td:last-child {
+            text-align: center;
+            vertical-align: middle;
+            font-size: 18px;
+            font-weight: bold;
+            color: #c0392b;
+            background-color: #fdf5e6;
+        }
 
         .feedback {
             font-size: var(--main-font-size);
             font-weight: bold;
             margin-top: 15px;
             min-height: 50px;
+            border: 1px dashed #ccc;
+            padding: 10px;
         }
 
         [contenteditable="true"] { outline: none; transition: background 0.2s; }
@@ -122,12 +144,7 @@
         /* --- YAZDIRMA (TEK SAYFAYA SIĞDIRMA) AYARLARI --- */
         @media print {
             .toolbar { display: none !important; }
-            html, body { 
-                background-color: white; 
-                margin: 0; 
-                padding: 0; 
-                height: 100%; 
-            }
+            html, body { background-color: white; margin: 0; padding: 0; height: 100%; }
             .container { 
                 box-shadow: none; 
                 padding: 0; 
@@ -137,22 +154,11 @@
                 display: flex;
                 flex-direction: column;
             }
-            table {
-                flex-grow: 1;
-                margin-bottom: 10px;
-            }
-            th, td {
-                padding: 6px 8px !important;
-                font-size: 13px !important; 
-            }
-            .feedback {
-                margin-top: 5px;
-                min-height: 40px;
-                flex-shrink: 0;
-            }
-            tr {
-                page-break-inside: avoid;
-            }
+            .feedback { border: none; }
+            table { flex-grow: 1; margin-bottom: 10px; }
+            th, td { padding: 6px 8px !important; font-size: 13px !important; }
+            .kurumsal-bilgi { font-size: 13px; margin-bottom: 10px; padding-bottom: 5px; }
+            tr { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             @page { size: A4 landscape; margin: 10mm; }
         }
@@ -167,43 +173,56 @@
             <option value='"Times New Roman", Times, serif'>Times New Roman</option>
             <option value="Arial, sans-serif">Arial</option>
             <option value='"Courier New", Courier, monospace'>Courier New</option>
-            <option value='Tahoma, sans-serif'>Tahoma</option>
         </select>
     </div>
 
     <div class="toolbar-group">
-        <label>Boyut (px):</label>
+        <label>Boyut:</label>
         <input type="number" id="fontSizeSelector" value="14" min="10" max="24" onchange="updateStyles()" style="width: 50px;">
     </div>
 
-    <div class="toolbar-group" style="flex-grow: 1; justify-content: space-between;">
-        <div>
-            <label>Hazır Şablon Yükle:</label>
-            <select id="sablonSecici" style="width: 250px;">
-                <option value="">-- Şablon Seçin --</option>
-                <option value="sayfa65">Sayfa 65 - Bilgi Görseli</option>
-                <option value="sayfa80">Sayfa 80 - Kavram Haritası</option>
-                <option value="sayfa95">Sayfa 95 - Senaryo Tasarımı</option>
-                <option value="sayfa232">Sayfa 232 - Performans Görevi (Bilgi Görseli)</option>
-                <option value="sayfa262">Sayfa 262 - Poster Tasarımı</option>
-                <option value="sayfa309">Sayfa 309 - STEM Tasarımı</option>
-                <option value="sayfa319">Sayfa 319 - Küresel Aynalar</option>
-                <option value="sayfa339">Sayfa 339 - Deney Düzeneği</option>
-                <option value="sayfa357">Sayfa 357 - Sunum Değerlendirme</option>
-                <option value="sayfa362">Sayfa 362 - Çalışma Yaprağı (Prizmalar)</option>
-                <option value="sayfa369">Sayfa 369 - Çizim ve Listeler (Mercekler)</option>
-            </select>
-            <button onclick="sablonYukle()">Tabloyu Doldur</button>
-        </div>
-        <div>
-            <button onclick="satirEkle()">+ Satır Ekle</button>
-            <button class="btn-print" onclick="window.print()">🖨️ PDF Olarak Kaydet</button>
-        </div>
+    <div class="toolbar-group">
+        <label>Şablon:</label>
+        <select id="sablonSecici" style="width: 220px;">
+            <option value="">-- Şablon Seçin --</option>
+            <option value="sayfa65">Sayfa 65 - Bilgi Görseli</option>
+            <option value="sayfa80">Sayfa 80 - Kavram Haritası</option>
+            <option value="sayfa95">Sayfa 95 - Senaryo Tasarımı</option>
+            <option value="sayfa232">Sayfa 232 - Performans (Bilgi Görseli)</option>
+            <option value="sayfa262">Sayfa 262 - Poster Tasarımı</option>
+            <option value="sayfa309">Sayfa 309 - STEM Tasarımı</option>
+            <option value="sayfa319">Sayfa 319 - Küresel Aynalar</option>
+            <option value="sayfa339">Sayfa 339 - Deney Düzeneği</option>
+            <option value="sayfa357">Sayfa 357 - Sunum Değerlendirme</option>
+            <option value="sayfa362">Sayfa 362 - Çalışma Yaprağı (Prizmalar)</option>
+            <option value="sayfa369">Sayfa 369 - Çizim ve Listeler (Mercekler)</option>
+        </select>
+        <button onclick="sablonYukle()">Şablonu Doldur</button>
+    </div>
+
+    <div style="margin-left: auto;">
+        <button onclick="satirEkle()">+ Satır Ekle</button>
+        <button class="btn-excel" onclick="excelIndir()">📊 Excel İndir</button>
+        <button class="btn-print" onclick="window.print()">🖨️ PDF Kaydet</button>
     </div>
 </div>
 
 <div class="container">
-    <table>
+    
+    <div class="kurumsal-bilgi">
+        <div>
+            <span contenteditable="true" style="font-size: 18px; font-weight: bold; color: #2c3e50;">Okul Adı Buraya Yazılacak...</span>
+            <span contenteditable="true"><strong>Ders:</strong> Fizik</span>
+            <span contenteditable="true"><strong>Konu:</strong> Performans Görevi Değerlendirmesi</span>
+        </div>
+        <div style="text-align: right;">
+            <span contenteditable="true"><strong>Öğrenci Adı Soyadı:</strong> ........................................</span>
+            <span contenteditable="true"><strong>Sınıfı / No:</strong> ............ / ............</span>
+            <span contenteditable="true"><strong>Tarih:</strong> .... / .... / 202..</span>
+        </div>
+    </div>
+
+    <table id="puanlama-tablosu">
         <thead>
             <tr>
                 <th colspan="6" id="ana-baslik" contenteditable="true" style="font-size: 1.2em; padding: 15px;">Dereceli Puanlama Anahtarı</th>
@@ -224,24 +243,24 @@
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
                 <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
+                <td contenteditable="true" class="puan-hucresi"></td>
             </tr>
         </tbody>
         <tfoot>
             <tr>
-                <td contenteditable="true">Toplam Puan</td>
-                <td colspan="4"></td>
-                <td contenteditable="true"></td>
+                <td contenteditable="true" style="text-align: right;" colspan="5">TOPLAM PUAN:</td>
+                <td id="toplam-puan" style="text-align: center; color: #c0392b; font-size: 20px;">0</td>
             </tr>
         </tfoot>
     </table>
 
     <div class="feedback" contenteditable="true">
-        Öğretmenin Geri Bildirimi:
+        Öğretmenin Geri Bildirimi: 
     </div>
 </div>
 
 <script>
+    // Veri Tabanı Düzenlendi ve Güvenli Hale Getirildi
     const sablonVerileri = {
         sayfa65: {
             baslik: "Dereceli Puanlama Anahtarı",
@@ -366,7 +385,6 @@
     function updateStyles() {
         const font = document.getElementById('fontSelector').value;
         const size = document.getElementById('fontSizeSelector').value + 'px';
-        
         document.documentElement.style.setProperty('--main-font', font);
         document.documentElement.style.setProperty('--main-font-size', size);
     }
@@ -380,45 +398,92 @@
             <td contenteditable="true"></td>
             <td contenteditable="true"></td>
             <td contenteditable="true"></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" class="puan-hucresi"></td>
         `;
         govde.appendChild(yeniSatir);
     }
 
+    // GÜNCELLENMİŞ VE HATALARA KARŞI KORUMALI ŞABLON YÜKLEME FONKSİYONU
     function sablonYukle() {
-        const secim = document.getElementById('sablonSecici').value;
-        if (!secim) {
-            alert("Lütfen menüden bir şablon seçin.");
-            return;
-        }
-
-        const veri = sablonVerileri[secim];
-        const govde = document.getElementById('rubrik-govdesi');
-        
-        document.getElementById('ana-baslik').innerText = veri.baslik;
-        document.getElementById('th-4').innerHTML = veri.kriterler[0];
-        document.getElementById('th-3').innerHTML = veri.kriterler[1];
-        document.getElementById('th-2').innerHTML = veri.kriterler[2];
-        document.getElementById('th-1').innerHTML = veri.kriterler[3];
-
-        govde.innerHTML = ""; 
-        
-        veri.satirlar.forEach(satirVerisi => {
-            const tr = document.createElement('tr');
+        try {
+            const secim = document.getElementById('sablonSecici').value;
             
-            satirVerisi.forEach(hucreMetni => {
-                const td = document.createElement('td');
-                td.contentEditable = "true";
-                td.innerText = hucreMetni;
-                tr.appendChild(td);
+            // Eğer seçim yapılmadıysa kullanıcıyı uyar (Eski kodda sessizce kapanıyordu)
+            if (!secim) {
+                alert("⚠️ Lütfen 'Şablonu Doldur' butonuna basmadan önce listeden bir şablon seçiniz.");
+                return;
+            }
+
+            const veri = sablonVerileri[secim];
+            const govde = document.getElementById('rubrik-govdesi');
+            
+            document.getElementById('ana-baslik').innerText = veri.baslik;
+            document.getElementById('th-4').innerHTML = veri.kriterler[0];
+            document.getElementById('th-3').innerHTML = veri.kriterler[1];
+            document.getElementById('th-2').innerHTML = veri.kriterler[2];
+            document.getElementById('th-1').innerHTML = veri.kriterler[3];
+
+            govde.innerHTML = ""; 
+            
+            veri.satirlar.forEach(satirVerisi => {
+                const tr = document.createElement('tr');
+                satirVerisi.forEach(hucreMetni => {
+                    const td = document.createElement('td');
+                    td.contentEditable = "true";
+                    td.innerHTML = hucreMetni;
+                    tr.appendChild(td);
+                });
+                
+                const tdPuan = document.createElement('td');
+                tdPuan.contentEditable = "true";
+                tdPuan.className = "puan-hucresi";
+                tr.appendChild(tdPuan);
+                govde.appendChild(tr);
             });
+            
+            hesapla(); // Tablo yüklenince puanı sıfırla
+            
+        } catch (error) {
+            console.error(error);
+            alert("Sistemsel bir hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.");
+        }
+    }
 
-            const tdPuan = document.createElement('td');
-            tdPuan.contentEditable = "true";
-            tr.appendChild(tdPuan);
+    // OTOMATİK PUAN HESAPLAMA SİSTEMİ
+    document.getElementById('rubrik-govdesi').addEventListener('input', function(e) {
+        if(e.target && e.target.classList.contains('puan-hucresi')) {
+            hesapla();
+        }
+    });
 
-            govde.appendChild(tr);
+    function hesapla() {
+        let toplam = 0;
+        const puanHucreleri = document.querySelectorAll('.puan-hucresi');
+        puanHucreleri.forEach(hucre => {
+            const puan = parseInt(hucre.innerText.trim());
+            if (!isNaN(puan)) {
+                toplam += puan;
+            }
         });
+        document.getElementById('toplam-puan').innerText = toplam;
+    }
+
+    // EXCEL OLARAK İNDİRME SİSTEMİ
+    function excelIndir() {
+        const table = document.getElementById("puanlama-tablosu");
+        let html = table.outerHTML;
+        
+        // Excel uyumluluğu için Türkçe karakter formatı
+        let excelDosyasi = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>${html}</body></html>`;
+        
+        const blob = new Blob([excelDosyasi], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Dereceli_Puanlama_Anahtari.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 </script>
 
