@@ -63,6 +63,8 @@
         .btn-blue:hover { background-color: #1f618d !important; }
         .btn-red { background-color: #c0392b !important; }
         .btn-red:hover { background-color: #e74c3c !important; }
+        .btn-purple { background-color: #8e44ad !important; }
+        .btn-purple:hover { background-color: #9b59b6 !important; }
 
         /* --- A4 TASARIMI --- */
         .container {
@@ -161,6 +163,17 @@
         <label>Hazır Şablonlar:</label>
         <select id="sablonSecici" style="width: 200px;">
             <option value="">-- Şablon Seçin --</option>
+            
+            <optgroup label="⭐ Kaydedilen Şablonlarım" id="ozel-sablonlar-grubu">
+                <option disabled>(Henüz kaydedilmiş şablon yok)</option>
+            </optgroup>
+
+            <optgroup label="Lise Genel Değerlendirmeler">
+                <option value="sayfaProje">Proje Değerlendirme Formu</option>
+                <option value="sayfaLab">Laboratuvar / Deney Değerlendirme</option>
+                <option value="sayfaTartisma">Bilimsel Tartışma (Münazara)</option>
+                <option value="sayfaKatilim">Derse Katılım ve Gözlem</option>
+            </optgroup>
             <optgroup label="Yeni Değerlendirmeler">
                 <option value="sayfaAnalitik">Analitik Puanlama Anahtarı</option>
                 <option value="sayfaOz">Özdeğerlendirme Formu</option>
@@ -185,10 +198,11 @@
     </div>
 
     <div class="toolbar-group">
-        <label>Dışa Aktar/Yükle:</label>
-        <button class="btn-blue" onclick="sablonIndir()">⬇️ Şablon İndir</button>
+        <label>Yönetim:</label>
+        <button class="btn-purple" onclick="sablonKaydetBrowser()">💾 Şablon Kaydet</button>
+        <button class="btn-blue" onclick="sablonIndir()" title="Dosya Olarak İndir">⬇️ İndir</button>
         <input type="file" id="jsonYukleyici" accept=".json" onchange="sablonDisaridanYukle(event)" style="display: none;">
-        <button class="btn-blue" onclick="document.getElementById('jsonYukleyici').click()">⬆️ Şablon Yükle</button>
+        <button class="btn-blue" onclick="document.getElementById('jsonYukleyici').click()" title="Dosyadan Yükle">⬆️ Yükle</button>
     </div>
 
     <div style="margin-left: auto; display: flex; gap: 5px;">
@@ -215,35 +229,11 @@
         </thead>
         <tbody id="rubrik-govdesi">
             <tr>
-                <td contenteditable="true">Problemi Anlama</td>
-                <td contenteditable="true">Problemin ne sorduğunu tam ve doğru olarak anlamış, verilenleri ve istenenleri eksiksiz belirlemiştir.</td>
-                <td contenteditable="true">Problemi genel hatlarıyla anlamış, verilenleri ve istenenleri büyük ölçüde belirlemiştir.</td>
-                <td contenteditable="true">Problemi kısmen anlamış, verilenlerin veya istenenlerin bir kısmını yanlış veya eksik belirlemiştir.</td>
-                <td contenteditable="true">Problemi hiç anlamamış, verilenleri ve istenenleri belirleyememiştir.</td>
-                <td contenteditable="true" class="puan-hucresi"></td>
-            </tr>
-            <tr>
-                <td contenteditable="true">Çözüm Stratejisi</td>
-                <td contenteditable="true">Problemin çözümü için mantıklı, bilimsel ve tamamen doğru bir strateji geliştirmiş, uygun modelleri seçmiştir.</td>
-                <td contenteditable="true">Problemin çözümü için uygun bir strateji geliştirmiş ancak kullanılacak yöntemlerde ufak eksiklikler vardır.</td>
-                <td contenteditable="true">Çözüm için bir strateji denemiş ancak seçilen yöntem problemi çözmek için yetersiz veya hatalıdır.</td>
-                <td contenteditable="true">Çözüm için herhangi bir strateji veya plan geliştirememiştir.</td>
-                <td contenteditable="true" class="puan-hucresi"></td>
-            </tr>
-            <tr>
-                <td contenteditable="true">İşlem ve Uygulama</td>
-                <td contenteditable="true">Seçilen stratejiyi doğru uygulamış, matematiksel/bilimsel işlemleri sırasıyla ve tamamen hatasız yapmıştır.</td>
-                <td contenteditable="true">Stratejiyi uygulamış ancak işlemlerde veya birim dönüştürmelerinde ufak tefek işlem hataları yapmıştır.</td>
-                <td contenteditable="true">İşlem basamaklarında mantık hataları yapmış, çözümü doğru sonuca ulaştıramamıştır.</td>
-                <td contenteditable="true">İşlem yapamamış veya tamamen ilgisiz işlemler yapmıştır.</td>
-                <td contenteditable="true" class="puan-hucresi"></td>
-            </tr>
-            <tr>
-                <td contenteditable="true">Sonuç ve Yorumlama</td>
-                <td contenteditable="true">Doğru sonuca ulaşmış, sonucu uygun birimle ifade etmiş ve bilimsel olarak doğru yorumlamıştır.</td>
-                <td contenteditable="true">Doğru sonuca ulaşmış ancak birim yazmayı unutmuş veya yorumlamayı eksik yapmıştır.</td>
-                <td contenteditable="true">Yanlış sonuca ulaşmış ve mantıklı bir değerlendirme yapamamıştır.</td>
-                <td contenteditable="true">Sonuca ulaşamamış ve herhangi bir yorum belirtmemiştir.</td>
+                <td contenteditable="true">Ölçüt Adı</td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
                 <td contenteditable="true" class="puan-hucresi"></td>
             </tr>
         </tbody>
@@ -262,6 +252,52 @@
 
 <script>
     const sablonVerileri = {
+        // --- LİSE GENEL DEĞERLENDİRME ŞABLONLARI ---
+        sayfaProje: {
+            baslik: "Proje Değerlendirme Anahtarı",
+            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+            satirlar: [
+                ["Araştırma Süreci", "Proje konusuyla ilgili çok çeşitli ve bilimsel olarak güvenilir kaynaklardan derinlemesine araştırma yapılmıştır.", "Proje konusuyla ilgili yeterli sayıda güvenilir kaynaktan araştırma yapılmıştır.", "Araştırma süreci yüzeysel kalmış, sınırlı sayıda kaynak kullanılmıştır.", "Yeterli araştırma yapılmamış, güvenilir olmayan kaynaklar kullanılmıştır."],
+                ["İçerik ve Bilgi Doğruluğu", "Proje içeriği bilimsel gerçeklere tamamen uygundur, konu eksiksiz ve çok net bir şekilde açıklanmıştır.", "Proje içeriği bilimsel gerçeklere uygundur, konu büyük ölçüde açıklanmıştır.", "Proje içeriğinde bilimsel hatalar mevcuttur veya konu yeterince açıklanamamıştır.", "Proje içeriği konuyla ilgisizdir ve bilimsel doğruluğu yoktur."],
+                ["Tasarım ve Düzen", "Proje raporu/ürünü son derece düzenli, estetik ve okunabilirlik kurallarına tamamen uygundur.", "Proje raporu/ürünü düzenlidir ve genel estetik kurallara uygundur.", "Proje raporu/ürününde biçimsel düzensizlikler vardır, estetik unsurlar zayıftır.", "Proje raporu/ürünü özensiz, düzensiz ve estetikten tamamen uzaktır."],
+                ["Zaman Yönetimi", "Proje çalışma takvimine tam olarak uyulmuş ve çalışma zamanından önce/tam zamanında teslim edilmiştir.", "Proje takvimine genel olarak uyulmuş ve çalışma zamanında teslim edilmiştir.", "Proje takviminde aksamalar olmuş, çalışma gecikmeli olarak teslim edilmiştir.", "Zaman yönetimi yapılmamış, proje uyarılara rağmen çok geç teslim edilmiştir."],
+                ["Sunum ve İfade", "Proje sınıfa çok etkili bir hitabetle sunulmuş, sorulan sorulara bilimsel ve tatmin edici cevaplar verilmiştir.", "Proje akıcı bir şekilde sunulmuş, sorulan sorulara genel olarak doğru cevaplar verilmiştir.", "Proje sunumu sırasında duraksamalar yaşanmış, sorulara verilen cevaplar yetersiz kalmıştır.", "Proje etkili bir şekilde sunulamamış, sorulan sorular cevapsız bırakılmıştır."]
+            ]
+        },
+        sayfaLab: {
+            baslik: "Laboratuvar ve Deney Değerlendirme Anahtarı",
+            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+            satirlar: [
+                ["Deneye Hazırlık", "Kullanılacak araç gereçleri eksiksiz tanır, deneyin teorik arka planına tam olarak hakimdir.", "Araç gereçleri tanır, deneyin teorik arka planı hakkında genel bilgi sahibidir.", "Araç gereçleri tanımakta zorlanır, teorik bilgi eksiği vardır.", "Deneye hazırlıksız gelmiştir, araç gereçler ve konu hakkında bilgisi yoktur."],
+                ["Cihaz Kullanımı ve Güvenlik", "Laboratuvar cihazlarını çok doğru kullanır ve güvenlik kurallarına (gözlük, önlük vb.) harfiyen uyar.", "Cihazları doğru kullanır, güvenlik kurallarına genel hatlarıyla uyar.", "Cihazları kullanırken yardıma ihtiyaç duyar, güvenlik kurallarını bazen ihlal eder.", "Cihazları hatalı kullanır, laboratuvar güvenliğini tehlikeye atar."],
+                ["Veri Toplama ve Kaydetme", "Deney ölçümlerini çok hassas yapar, verileri eksiksiz ve düzenli bir şekilde tablolara/grafiklere aktarır.", "Ölçümleri doğru yapar, verileri tablolara aktarır ancak küçük hatalar içerebilir.", "Ölçümlerde dikkatsizdir, veri kaydetme sürecinde eksiklikleri vardır.", "Ölçümleri yanlış yapar, verileri kaydetmez veya düzensiz kaydeder."],
+                ["Sonuç ve Yorumlama", "Toplanan verileri bilimsel yöntemlerle analiz eder, deneyin amacına uygun ve doğru bir sonuç çıkarır.", "Verileri analiz eder ve deneyin amacına uygun genel bir sonuç çıkarır.", "Veri analizinde zorlanır, sonuç çıkarma kısmı eksik veya kısmen hatalıdır.", "Verileri yorumlayamaz, deneyin amacıyla bağlantılı bir sonuç çıkaramaz."],
+                ["Laboratuvar Düzeni", "Deney bitiminde malzemeleri temizler, çalışma alanını aldığı gibi çok düzenli bırakır.", "Çalışma alanını temiz ve düzenli bırakmaya özen gösterir.", "Çalışma alanını temizlerken dikkatsiz davranır, ufak dağınıklıklar bırakır.", "Deney sonrasında malzemeleri temizlemez ve çalışma alanını dağınık bırakır."]
+            ]
+        },
+        sayfaTartisma: {
+            baslik: "Bilimsel Tartışma (Argümantasyon) Formu",
+            kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
+            satirlar: [
+                ["İddia (Tez) Geliştirme", "Tartışma konusuyla ilgili çok net, mantıklı ve savunulabilir, güçlü iddialar ortaya koyar.", "Konuyla ilgili anlaşılır ve savunulabilir iddialar ortaya koyar.", "Ortaya koyduğu iddialar zayıftır veya konuyla tam olarak örtüşmemektedir.", "Tartışma konusuyla ilgili geçerli bir iddia veya tez üretemez."],
+                ["Kanıt Sunma", "İddiasını desteklemek için bilimsel verilere, deney sonuçlarına ve sağlam kanıtlara dayanır.", "İddiasını destekleyecek uygun kanıtlar ve örnekler sunar.", "Sunduğu kanıtlar yetersizdir veya iddiasını doğrudan desteklememektedir.", "İddiasını savunurken hiçbir kanıt, veri veya bilimsel örnek sunamaz."],
+                ["Karşı Argümanı Çürütme", "Karşı tarafın argümanlarındaki zayıf noktaları hızla tespit eder ve mantıklı gerekçelerle başarılı bir şekilde çürütür.", "Karşı argümanları değerlendirir ve makul karşı tezler üretir.", "Karşı tarafın argümanlarına cevap vermekte zorlanır, savunmada kalır.", "Karşı argümanları dikkate almaz veya bunlara mantıklı bir cevap veremez."],
+                ["Etkili İletişim ve Hitabet", "Ses tonunu, vurguyu ve beden dilini mükemmel kullanarak dinleyicileri ikna etmeyi başarır.", "Düşüncelerini akıcı ve anlaşılır bir Türkçe ile ifade eder.", "Konuşurken duraksamalar yaşar, dinleyicinin ilgisini çekmekte zorlanır.", "Kendini ifade etmekte çok zorlanır, iletişim becerileri yetersizdir."],
+                ["Tartışma Kurallarına Uyma", "Karşı tarafı saygıyla dinler, asla söz kesmez ve bilimsel nezaket kurallarına harfiyen uyar.", "Karşı tarafı dinler ve genel tartışma kurallarına uyar.", "Zaman zaman karşı tarafın sözünü keser veya tartışmada duygusal tepkiler verir.", "Tartışma kurallarına uymaz, saygısız tutum sergiler ve sadece kendi konuşmak ister."]
+            ]
+        },
+        sayfaKatilim: {
+            baslik: "Derse Katılım ve Gözlem Formu",
+            kriterler: ["Her Zaman<br>(4)", "Sık Sık<br>(3)", "Bazen<br>(2)", "Hiçbir Zaman<br>(1)"],
+            satirlar: [
+                ["Hazırlıklı Gelme", "Derse kitabını, defterini ve gerekli tüm araç gereçlerini eksiksiz getirerek konu hakkında ön hazırlık yapar.", "Derse araç gereçleriyle gelir ve konuya genel olarak hazırdır.", "Derse araç gereçlerini unutarak gelir veya konu hakkında hazırlığı yoktur.", "Derse sürekli hazırlıksız ve materyalsiz gelir."],
+                ["Derse Odaklanma", "Ders süresince dikkati hiç dağılmaz, anlatılan konuyu ilgiyle ve aktif olarak takip eder.", "Dersi genel olarak dikkatle dinler ve takip eder.", "Ders sırasında dikkati çabuk dağılır, konuyla ilgisi zaman zaman kopar.", "Dersle hiç ilgilenmez, sürekli başka şeylerle (telefon, arkadaşıyla konuşma vb.) meşgul olur."],
+                ["Söz Hakkı Alma", "Sınıf içi etkinliklerde gönüllü olarak söz alır, sorulan sorulara düşünerek cevaplar verir.", "Sorulduğunda cevap verir ve sınıf etkinliklerine katılım sağlar.", "Sadece ısrar edildiğinde söz alır, genellikle pasif kalmayı tercih eder.", "Derste hiçbir zaman söz almaz, sorulara cevap vermekten kaçınır."],
+                ["Nitelikli Soru Sorma", "Konuyu daha derinlemesine anlamak veya farklı bağlamlarla ilişkilendirmek için nitelikli sorular sorar.", "Anlamadığı yerleri sorarak eksiklerini gidermeye çalışır.", "Çok nadir soru sorar, genellikle anlatılanı dinlemekle yetinir.", "Konuyu anlasa da anlamasa da ders boyunca hiçbir soru sormaz."],
+                ["Grup İçi İletişim", "Grup veya eşli çalışmalarda arkadaşlarına karşı son derece saygılı, destekleyici ve uyumludur.", "Grup çalışmalarında arkadaşlarıyla uyum içinde çalışır.", "Grup çalışmalarında zaman zaman iletişim sorunları yaşar veya fikir ayrılığına düşer.", "Grup çalışmalarına katılmak istemez, arkadaşlarıyla uyumsuz davranışlar sergiler."]
+            ]
+        },
+        // --- ÖNCEKİ ŞABLONLAR ---
         sayfaAnalitik: {
             baslik: "Analitik Dereceli Puanlama Anahtarı",
             kriterler: ["Çok İyi<br>(4)", "İyi<br>(3)", "Orta<br>(2)", "Geliştirilebilir<br>(1)"],
@@ -341,15 +377,78 @@
         veriKaydet();
     }
 
+    // TARAYICIYA KAYDETME VE YÜKLEME (GÜNCELLENDİ)
+    function sablonKaydetBrowser() {
+        const isim = prompt("Kaydedilecek şablon için bir isim giriniz:");
+        if (!isim) return;
+
+        const satirlar = [];
+        document.querySelectorAll('#rubrik-govdesi tr').forEach(tr => {
+            const hucreler = [];
+            tr.querySelectorAll('td:not(.puan-hucresi)').forEach(td => hucreler.push(td.innerText));
+            satirlar.push(hucreler);
+        });
+
+        const yeniSablon = {
+            isim: isim,
+            veri: {
+                baslik: document.getElementById('ana-baslik').innerText,
+                kriterler: [
+                    document.getElementById('th-4').innerHTML,
+                    document.getElementById('th-3').innerHTML,
+                    document.getElementById('th-2').innerHTML,
+                    document.getElementById('th-1').innerHTML
+                ],
+                satirlar: satirlar
+            }
+        };
+
+        let kayitliSablonlar = JSON.parse(localStorage.getItem('ogretmenAsistanOzelSablonlar')) || {};
+        const sablonId = 'ozel_' + Date.now();
+        kayitliSablonlar[sablonId] = yeniSablon;
+        localStorage.setItem('ogretmenAsistanOzelSablonlar', JSON.stringify(kayitliSablonlar));
+
+        kayitliSablonlariMenuyeEkle();
+        alert("Şablon '" + isim + "' adıyla başarıyla kaydedildi!");
+    }
+
+    function kayitliSablonlariMenuyeEkle() {
+        const grup = document.getElementById('ozel-sablonlar-grubu');
+        grup.innerHTML = '';
+        let kayitliSablonlar = JSON.parse(localStorage.getItem('ogretmenAsistanOzelSablonlar')) || {};
+        
+        let varMi = false;
+        for (const [id, sablon] of Object.entries(kayitliSablonlar)) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.innerText = "⭐ " + sablon.isim;
+            grup.appendChild(opt);
+            varMi = true;
+        }
+        
+        if (!varMi) {
+            const opt = document.createElement('option');
+            opt.disabled = true;
+            opt.innerText = "(Henüz kaydedilmiş şablon yok)";
+            grup.appendChild(opt);
+        }
+    }
+
     function sablonYukle() {
         try {
             const secim = document.getElementById('sablonSecici').value;
             if (!secim) {
-                alert("⚠️ Lütfen 'Doldur' butonuna basmadan önce listeden bir şablon seçiniz.");
+                alert("⚠️ Lütfen menüden bir şablon seçiniz.");
                 return;
             }
 
-            const veri = sablonVerileri[secim];
+            let veri;
+            if (secim.startsWith('ozel_')) {
+                let kayitliSablonlar = JSON.parse(localStorage.getItem('ogretmenAsistanOzelSablonlar')) || {};
+                veri = kayitliSablonlar[secim].veri;
+            } else {
+                veri = sablonVerileri[secim];
+            }
             tabloyuOlustur(veri.baslik, veri.kriterler, veri.satirlar);
         } catch (error) {
             console.error(error);
@@ -452,18 +551,19 @@
 
     function veriKaydet() {
         const htmlIcerik = document.getElementById('yazdirma-alani').innerHTML;
-        localStorage.setItem('ogretmenAsistanHafiza', htmlIcerik);
+        localStorage.setItem('ogretmenAsistanHafizaSade', htmlIcerik);
     }
 
     function hafizayiTemizle() {
         if(confirm("Tüm veriler temizlenecek, emin misiniz?")) {
-            localStorage.removeItem('ogretmenAsistanHafiza');
+            localStorage.removeItem('ogretmenAsistanHafizaSade');
             location.reload();
         }
     }
 
     window.onload = function() {
-        const kayitliVeri = localStorage.getItem('ogretmenAsistanHafiza');
+        kayitliSablonlariMenuyeEkle();
+        const kayitliVeri = localStorage.getItem('ogretmenAsistanHafizaSade');
         if(kayitliVeri) {
             document.getElementById('yazdirma-alani').innerHTML = kayitliVeri;
             hesapla();
